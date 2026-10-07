@@ -40,4 +40,10 @@ Configurá `NODE_ENV=production`, la URL pública en `CLIENT_ORIGIN`, una `JWT_S
 
 Cloudinary conserva las fotos fuera del filesystem efímero del servidor; MongoDB guarda las URLs seguras y los identificadores de los assets. En desarrollo, si las credenciales Cloudinary están vacías, las imágenes se guardan localmente en `server/uploads`.
 
+## Vercel + Render
+
+- En Vercel, conectá este repositorio y elegí `client` como Root Directory. El archivo `client/vercel.json` reenvía `/api/*` y `/uploads/*` al servicio de Render.
+- En Render, desplegá el servicio Node desde la raíz del repositorio con `npm install` y `npm start`.
+- En Render, definí `MONGODB_URI`, `JWT_SECRET`, `CLIENT_ORIGIN` (la URL pública de Vercel) y las credenciales de Cloudinary. Render provee `PORT` automáticamente.
+
 El checkout todavía no está conectado a una pasarela de pagos. Los pedidos, pagos, correo de verificación y recuperación de contraseña se agregan antes de abrir ventas reales.
