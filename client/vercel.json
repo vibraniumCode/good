@@ -8,6 +8,10 @@
     {
       "source": "/uploads/:path*",
       "destination": "https://good-3vmz.onrender.com/uploads/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
