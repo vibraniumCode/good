@@ -18,7 +18,7 @@ if (cloudinaryConfigured) {
   });
 }
 
-export async function saveProductImage(buffer, productId, side) {
+export async function saveProductImage(buffer, productId, side, mimetype = 'image/png') {
   if (cloudinaryConfigured) {
     const publicId = `${productId}-${side}-${crypto.randomUUID()}`;
     const result = await new Promise((resolve, reject) => {
@@ -26,7 +26,6 @@ export async function saveProductImage(buffer, productId, side) {
         folder: 'good/products',
         public_id: `${productId}-${side}-${crypto.randomUUID()}`,
         resource_type: 'image',
-        format: 'png',
         overwrite: false
       }, (error, uploaded) => error ? reject(error) : resolve(uploaded));
       stream.end(buffer);
@@ -39,7 +38,8 @@ export async function saveProductImage(buffer, productId, side) {
   }
 
   await fs.mkdir(uploadRoot, { recursive: true });
-  const filename = `${productId}-${side}-${crypto.randomUUID()}.png`;
+  const extension = ({ 'image/jpeg': '.jpg', 'image/webp': '.webp', 'image/png': '.png' })[mimetype] || '.img';
+  const filename = `${productId}-${side}-${crypto.randomUUID()}${extension}`;
   await fs.writeFile(path.join(uploadRoot, filename), buffer, { flag: 'wx' });
   return { url: `/uploads/${filename}`, publicId: '' };
 }

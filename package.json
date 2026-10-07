@@ -10,7 +10,6 @@
     "dev": "node scripts/dev.js",
     "dev:api": "node --watch server/src/index.js",
     "dev:web": "npm --prefix client run dev",
-    "dev:images": "python -m uvicorn processor.main:app --host 127.0.0.1 --port 8001",
     "seed:admin": "node server/src/scripts/seed-admin.js",
     "build": "npm --prefix client run build",
     "start": "node server/src/index.js"

@@ -6,8 +6,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const children = [];
 const jobs = [
   { name: 'api', command: process.execPath, args: ['--watch', 'server/src/index.js'], cwd: root },
-  { name: 'web', command: process.execPath, args: [path.join(root, 'node_modules', 'vite', 'bin', 'vite.js'), '--host', '0.0.0.0', path.join(root, 'client')], cwd: root },
-  { name: 'image processor', command: process.env.PYTHON || 'python', args: ['-m', 'uvicorn', 'processor.main:app', '--host', '127.0.0.1', '--port', '8001'], cwd: root }
+  { name: 'web', command: process.execPath, args: [path.join(root, 'node_modules', 'vite', 'bin', 'vite.js'), '--host', '0.0.0.0', path.join(root, 'client')], cwd: root }
 ];
 
 for (const job of jobs) {

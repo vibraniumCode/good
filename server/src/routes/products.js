@@ -13,15 +13,8 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 
 const splitList = (value) => String(value || '').split(',').map((part) => part.trim()).filter(Boolean).slice(0, 30);
 const slugify = (value) => String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 90);
 
-async function removeBackground(file, productId, side) {
-  const form = new FormData();
-  form.append('file', new Blob([file.buffer], { type: file.mimetype }), file.originalname);
-  const base = process.env.IMAGE_PROCESSOR_URL || 'http://127.0.0.1:8001';
-  const response = await fetch(`${base}/remove-background`, { method: 'POST', body: form, signal: AbortSignal.timeout(180000) });
-  if (!response.ok) throw new Error(`No se pudo recortar la imagen (${response.status}). Revisá que el procesador de imágenes esté iniciado.`);
-  const png = Buffer.from(await response.arrayBuffer());
-  if (!png.length || png.length > 25 * 1024 * 1024) throw new Error('El procesador devolvió una imagen inválida.');
-  return saveProductImage(png, productId, side);
+async function storeOriginalImage(file, productId, side) {
+  return saveProductImage(file.buffer, productId, side, file.mimetype);
 }
 
 function publicProduct(product) {
@@ -58,10 +51,10 @@ router.post('/', requireAuth, requireAdmin, upload.fields([{ name: 'frontImage',
     if (!files.frontImage?.[0]) return res.status(400).json({ error: 'Subí la foto del frente.' });
     const id = crypto.randomUUID();
     data.slug = `${slugify(req.body.slug || data.name)}-${id.slice(0, 6)}`;
-    const frontImage = await removeBackground(files.frontImage[0], id, 'front'); madeFiles.push(frontImage);
+    const frontImage = await storeOriginalImage(files.frontImage[0], id, 'front'); madeFiles.push(frontImage);
     data.frontImage = frontImage.url;
     data.frontImagePublicId = frontImage.publicId;
-    const backImage = files.backImage?.[0] ? await removeBackground(files.backImage[0], id, 'back') : frontImage;
+    const backImage = files.backImage?.[0] ? await storeOriginalImage(files.backImage[0], id, 'back') : frontImage;
     if (backImage !== frontImage) madeFiles.push(backImage);
     data.backImage = backImage.url;
     data.backImagePublicId = backImage.publicId;
@@ -85,13 +78,13 @@ router.put('/:id', requireAuth, requireAdmin, upload.fields([{ name: 'frontImage
     const data = parseProduct(req.body);
     const files = req.files || {};
     if (files.frontImage?.[0]) {
-      const image = await removeBackground(files.frontImage[0], product.id, 'front'); madeFiles.push(image);
+      const image = await storeOriginalImage(files.frontImage[0], product.id, 'front'); madeFiles.push(image);
       data.frontImage = image.url; data.frontImagePublicId = image.publicId;
     } else {
       data.frontImage = product.frontImage; data.frontImagePublicId = product.frontImagePublicId || '';
     }
     if (files.backImage?.[0]) {
-      const image = await removeBackground(files.backImage[0], product.id, 'back'); madeFiles.push(image);
+      const image = await storeOriginalImage(files.backImage[0], product.id, 'back'); madeFiles.push(image);
       data.backImage = image.url; data.backImagePublicId = image.publicId;
     } else {
       data.backImage = product.backImage || data.frontImage;

@@ -46,18 +46,39 @@ function Header({ user, onAuth, onLogout, onCart, cartCount }) {
 }
 
 function Rail({ products, onSelect }) {
-  const [hovered, setHovered] = useState(null);
-  const first = products.slice(0, 3);
-  const fallback = first.length ? first : [];
-  return <section className="rail-section" id="perchero"><div className="rail-heading"><span className="eyebrow">Tocá para descubrir</span><h2>Del perchero a vos.</h2><p>Pasá el cursor por una prenda —o tocala— para verla de cerca.</p></div>
-    {fallback.length ? <div className="rail-scene"><div className="rail-pole"><i /><i /></div><div className="rail-row">{fallback.map((product) => { const hasBack = product.backImage && product.backImage !== product.frontImage; return <button className="rail-item" key={product.id} onMouseEnter={() => { setHovered(product.id); onSelect(product); }} onMouseLeave={() => setHovered(null)} onFocus={() => { setHovered(product.id); onSelect(product); }} onClick={() => onSelect(product)} aria-label={`Ver ${product.name}`}>
-      <span className="rail-hook" /><span className="hanger"><i /></span><img key={`${product.id}-${hovered === product.id && hasBack ? 'back' : 'front'}`} className="rail-garment" src={imageFor(hovered === product.id && hasBack ? product.backImage : product.frontImage)} alt={product.name} /><span className="rail-name">{product.name}</span>
-    </button>; })}</div>
-      <div className="rail-hint"><span>Pasá para explorar</span><ArrowDown /></div>
-    </div> : <div className="empty-rail">Las prendas nuevas van a aparecer acá. <a href="#productos">Ver catálogo <ArrowRight size={14} /></a></div>}
+  const items = products.slice(0, 6);
+  const [activeId, setActiveId] = useState('');
+  const selected = items.find((product) => product.id === activeId) || items[0];
+  const selectedIndex = Math.max(0, items.findIndex((product) => product.id === selected?.id));
+  return <section className="showcase-section" id="perchero">
+    <div className="showcase-heading"><div><span className="eyebrow">GOOD / Colección seleccionada</span><h2>Una buena pieza<br />cambia todo.</h2></div><p>Prendas para usar a tu manera.<br />Elegí una y mirala de cerca.</p></div>
+    {selected ? <>
+      <div className="showcase-feature">
+        <button className="showcase-image-panel" onClick={() => onSelect(selected)} aria-label={`Descubrir ${selected.name}`}>
+          <span className="showcase-index">{String(selectedIndex + 1).padStart(2, '0')} <i>/</i> {String(items.length).padStart(2, '0')}</span>
+          <span className="showcase-photo-frame"><img src={imageFor(selected.frontImage)} alt={selected.name} /></span>
+          <span className="showcase-photo-note">GOOD STUDIO <i>·</i> {selected.category}</span>
+          <span className="showcase-image-cta">Ver prenda <ArrowUpRight size={16} /></span>
+        </button>
+        <div className="showcase-copy">
+          <span className="showcase-kicker">Una elección para todos los días</span>
+          <h3>{selected.name}</h3>
+          <span className="showcase-rule" />
+          <p>{selected.description || 'Diseñada para acompañarte temporada tras temporada.'}</p>
+          <div className="showcase-details"><span>{selected.colors?.join(' · ') || selected.category}</span><b>{money(selected.price)}</b></div>
+          <button className="showcase-discover" onClick={() => onSelect(selected)}>Descubrir la prenda <ArrowUpRight size={16} /></button>
+          <div className="showcase-controls"><span>Explorá la colección</span><div>
+            <button aria-label="Prenda anterior" disabled={items.length < 2} onClick={() => setActiveId(items[(selectedIndex - 1 + items.length) % items.length].id)}><ArrowLeft size={16} /></button>
+            <button aria-label="Prenda siguiente" disabled={items.length < 2} onClick={() => setActiveId(items[(selectedIndex + 1) % items.length].id)}><ArrowRight size={16} /></button>
+          </div></div>
+        </div>
+      </div>
+      {items.length > 1 && <div className="showcase-thumbnails" aria-label="Elegir prenda">{items.map((product, index) => <button className={product.id === selected.id ? 'active' : ''} key={product.id} onClick={() => setActiveId(product.id)} aria-pressed={product.id === selected.id}>
+        <span className="showcase-thumb-image"><img src={imageFor(product.frontImage)} alt="" loading="lazy" /></span><span className="showcase-thumb-number">{String(index + 1).padStart(2, '0')}</span><span className="showcase-thumb-name">{product.name}</span><span className="showcase-thumb-price">{money(product.price)}</span>
+      </button>)}</div>}
+    </> : <div className="empty-rail">Las prendas nuevas van a aparecer acá. <a href="#productos">Ver catálogo <ArrowRight size={14} /></a></div>}
   </section>;
 }
-function ArrowDown() { return <span className="down-arrow">↓</span>; }
 
 function ProductCard({ product, onSelect, onAdd }) {
   const [hover, setHover] = useState(false); const hasBack = product.backImage && product.backImage !== product.frontImage;
@@ -135,7 +156,7 @@ function ProductForm({ product, categories, error, busy, onSubmit, onClose }) {
       <label>Colores <small>Separados por coma</small><input name="colors" defaultValue={product?.colors?.join(', ') || ''} placeholder="Charcoal, Arena" /></label><label>Etiquetas <small>Separadas por coma</small><input name="tags" defaultValue={product?.tags?.join(', ') || ''} placeholder="Nuevo, Más vendido" /></label>
       <label className="span-two">Descripción<textarea name="description" rows="3" defaultValue={product?.description || ''} placeholder="Contá algo sobre la prenda…" /></label>
     </div>
-    <div className="upload-heading"><div><h3>Fotos del producto</h3><p>Separaremos el fondo y dejaremos la prenda en PNG transparente.</p></div><ImagePlus size={19} /></div>
+    <div className="upload-heading"><div><h3>Fotos del producto</h3><p>Subí fotos originales con buena luz y fondo limpio; se guardan tal como las cargás.</p></div><ImagePlus size={19} /></div>
     <div className="upload-grid"><label className="upload-slot"><input name="frontImage" type="file" accept="image/png,image/jpeg,image/webp" required={!product} onChange={(e) => preview(e, setFrontPreview)} /><span className="upload-preview">{frontPreview ? <img src={imageFor(frontPreview)} alt="Vista previa frente" /> : <ImagePlus size={22} />}</span><span><b>Vista de frente</b><small>{product ? 'Subí otra imagen para reemplazar' : 'Obligatoria · JPG, PNG o WebP'}</small></span></label>
       <label className="upload-slot"><input name="backImage" type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => preview(e, setBackPreview)} /><span className="upload-preview">{backPreview ? <img src={imageFor(backPreview)} alt="Vista previa dorso" /> : <ArrowLeft size={22} />}</span><span><b>Vista del dorso</b><small>{product ? 'Opcional · deja la anterior si está vacío' : 'Opcional · cargá las dos vistas'}</small></span></label></div>
     <div className="form-checks"><label><input type="checkbox" name="featured" defaultChecked={product?.featured || false} /> Destacar en el perchero</label><label><input type="checkbox" name="active" defaultChecked={product?.active ?? true} /> Publicar en la tienda</label></div>
